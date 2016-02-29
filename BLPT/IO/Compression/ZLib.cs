@@ -28,23 +28,24 @@ namespace BLPT.IO.Compression
             }
         }
 
-        private int Adler32(byte[] Data)
+        private uint Adler32(byte[] Data)
         {
-            const uint a32mod = 65521;
-            uint s1 = 1, s2 = 0;
-            foreach (byte b in Data)
+            const int MOD_ADLER = 65521;
+
+            uint a = 1, b = 0;
+            for (int Index = 0; Index < Data.Length; Index++)
             {
-                s1 = (s1 + b) % a32mod;
-                s2 = (s2 + s1) % a32mod;
+                a = (a + Data[Index]) % MOD_ADLER;
+                b = (b + a) % MOD_ADLER;
             }
 
-            return unchecked((int)((s2 << 16) + s1));
+            return (b << 16) | a;
         }
 
         public byte[] Decompress(byte[] Data, uint DecompressedLength)
         {
-            byte[] Headerless = new byte[Data.Length - 2];
-            Buffer.BlockCopy(Data, 2, Headerless, 0, Headerless.Length - 4);
+            byte[] Headerless = new byte[Data.Length - 6];
+            Buffer.BlockCopy(Data, 2, Headerless, 0, Headerless.Length);
 
             using (MemoryStream Stream = new MemoryStream(Headerless))
             {
