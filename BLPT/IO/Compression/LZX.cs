@@ -18,14 +18,14 @@ namespace BLPT.IO.Compression
         public byte[] Compress(byte[] Data)
         {
             string AppPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().CodeBase);
-            string XboxDecompress = Path.Combine(AppPath, "xbcompress.exe");
+            string XboxCompress = Path.Combine(AppPath, "xbcompress.exe");
 
             string InputFile = Path.GetTempFileName();
             string OutputFile = Path.GetTempFileName();
 
             File.WriteAllBytes(InputFile, Data);
             ProcessStartInfo Info = new ProcessStartInfo();
-            Info.FileName = XboxDecompress;
+            Info.FileName = XboxCompress;
             Info.Arguments = "/Q /Y /N " + InputFile + " " + OutputFile;
             Info.WindowStyle = ProcessWindowStyle.Hidden;
             Process Compressor = Process.Start(Info);
