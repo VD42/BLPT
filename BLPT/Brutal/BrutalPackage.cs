@@ -55,14 +55,21 @@ namespace BLPT.Brutal
             {
                 Header.Seek(FilesTableOffset + Index * 0x10, SeekOrigin.Begin);
 
+                //Lengths
                 uint DecompressedLength = Reader.ReadUInt24();
                 uint LengthDifference = (uint)(Reader.ReadUInt16() << 1) | ((DecompressedLength & 1) << 17); //Probably for "obfuscation"
                 uint CompressedLength = Reader.ReadUInt24();
+
                 LengthDifference |= CompressedLength >> 23;
                 DecompressedLength = (DecompressedLength >> 1) + LengthDifference;
                 CompressedLength = (CompressedLength & 0x7fffff) >> 1;
+
+                //Offsets
                 uint DataOffset = Reader.ReadUInt24() << 5;
                 byte DataFormat = Reader.ReadByte();
+                DataOffset |= (uint)(DataFormat & 0xf0) >> 3;
+                DataFormat &= 0xf;
+
                 uint NameOffset = (Reader.ReadUInt24() >> 3) + StringsTableOffset;
                 byte Flags = Reader.ReadByte();
 
@@ -143,14 +150,21 @@ namespace BLPT.Brutal
                 {
                     Header.Seek(FilesTableOffset + Index * 0x10, SeekOrigin.Begin);
 
+                    //Lengths
                     uint DecompressedLength = Reader.ReadUInt24();
                     uint LengthDifference = (uint)(Reader.ReadUInt16() << 1) | ((DecompressedLength & 1) << 17); //Probably for "obfuscation"
                     uint CompressedLength = Reader.ReadUInt24();
+
                     LengthDifference |= CompressedLength >> 23;
                     DecompressedLength = (DecompressedLength >> 1) + LengthDifference;
                     CompressedLength = (CompressedLength & 0x7fffff) >> 1;
+
+                    //Offsets
                     uint DataOffset = Reader.ReadUInt24() << 5;
                     byte DataFormat = Reader.ReadByte();
+                    DataOffset |= (uint)(DataFormat & 0xf0) >> 3;
+                    DataFormat &= 0xf;
+
                     uint NameOffset = (Reader.ReadUInt24() >> 3) + StringsTableOffset;
                     byte Flags = Reader.ReadByte();
 
@@ -198,6 +212,7 @@ namespace BLPT.Brutal
                             Header.Seek(2, SeekOrigin.Current);
                             Writer.Write24((uint)((Compressed.Length << 1) & 0x7fffff) | ((LengthDifference & 1) << 23));
                             Writer.Write24((uint)(Offset >> 5));
+                            Writer.Write(DataFormat);
                             Offset += Compressed.Length;
 
                             Found = true;
