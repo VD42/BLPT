@@ -21,7 +21,7 @@ namespace BLPT
             Console.ForegroundColor = ConsoleColor.Cyan;
             Console.WriteLine("Brutal Legend Package Tamper");
             Console.WriteLine("0xC0DED by gdkchan");
-            Console.WriteLine("Version 0.1.3");
+            Console.WriteLine("Version 0.1.4");
             Console.ResetColor();
             Console.WriteLine(string.Empty);
 

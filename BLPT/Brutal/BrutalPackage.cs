@@ -67,8 +67,8 @@ namespace BLPT.Brutal
                 //Offsets
                 uint DataOffset = Reader.ReadUInt24() << 5;
                 byte DataFormat = Reader.ReadByte();
-                DataOffset |= (uint)(DataFormat & 0xf0) >> 3;
-                DataFormat &= 0xf;
+                DataOffset |= (uint)(DataFormat & 0xf8) >> 3;
+                DataFormat &= 7;
 
                 uint NameOffset = (Reader.ReadUInt24() >> 3) + StringsTableOffset;
                 byte Flags = Reader.ReadByte();
@@ -162,8 +162,8 @@ namespace BLPT.Brutal
                     //Offsets
                     uint DataOffset = Reader.ReadUInt24() << 5;
                     byte DataFormat = Reader.ReadByte();
-                    DataOffset |= (uint)(DataFormat & 0xf0) >> 3;
-                    DataFormat &= 0xf;
+                    DataOffset |= (uint)(DataFormat & 0xf8) >> 3;
+                    DataFormat &= 7;
 
                     uint NameOffset = (Reader.ReadUInt24() >> 3) + StringsTableOffset;
                     byte Flags = Reader.ReadByte();
