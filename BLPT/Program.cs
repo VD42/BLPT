@@ -7,6 +7,9 @@ namespace BLPT
 {
     class Program
     {
+        // -e "C:\Users\vladi\Downloads\RgB_Stuff orig\RgB_Stuff.~h" "C:\Users\vladi\Downloads\RgB_Stuff orig\RgB_Stuff.~p" "C:\Users\vladi\Downloads\RgB_Stuff orig\out"
+        // -i "C:\Users\vladi\Downloads\RgB_Stuff orig\RgB_Stuff — копия.~h" "C:\Users\vladi\Downloads\RgB_Stuff orig\RgB_Stuff — копия.~p" "C:\Users\vladi\Downloads\RgB_Stuff orig\out"
+        // -e "C:\Users\vladi\Downloads\RgB_Stuff orig\RgB_Stuff — копия.~h" "C:\Users\vladi\Downloads\RgB_Stuff orig\RgB_Stuff — копия.~p" "C:\Users\vladi\Downloads\RgB_Stuff orig\out"
         static void Main(string[] args)
         {
             Console.ForegroundColor = ConsoleColor.White;

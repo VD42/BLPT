@@ -55,23 +55,16 @@ namespace BLPT.Brutal
             {
                 Header.Seek(FilesTableOffset + Index * 0x10, SeekOrigin.Begin);
 
-                //Lengths
                 uint DecompressedLength = Reader.ReadUInt24();
-                uint LengthDifference = (uint)(Reader.ReadUInt16() << 1) | ((DecompressedLength & 1) << 17); //Probably for "obfuscation"
-                uint CompressedLength = Reader.ReadUInt24();
-
-                LengthDifference |= CompressedLength >> 23;
-                DecompressedLength = (DecompressedLength >> 1) + LengthDifference;
-                CompressedLength = (CompressedLength & 0x7fffff) >> 1;
-
-                //Offsets
-                uint DataOffset = Reader.ReadUInt24() << 5;
-                byte DataFormat = Reader.ReadByte();
-                DataOffset |= (uint)(DataFormat & 0xf8) >> 3;
-                DataFormat &= 7;
-
                 uint NameOffset = (Reader.ReadUInt24() >> 3) + StringsTableOffset;
+                uint DataFormat = Reader.ReadUInt16();
+                uint DataOffset = Reader.ReadUInt24() << 5;
+                byte Something = Reader.ReadByte();
+                uint CompressedLength = Reader.ReadUInt24() >> 4;
                 byte Flags = Reader.ReadByte();
+
+                if (CompressedLength > DecompressedLength)
+                    throw new Exception("Something wrong!");
 
                 Header.Seek(NameOffset, SeekOrigin.Begin);
                 string FileName = StringUtilities.ReadASCIIString(Header);
@@ -92,13 +85,10 @@ namespace BLPT.Brutal
                 Data.Read(Buffer, 0, Buffer.Length);
 
                 ICompression Decompressor;
-                switch ((CompressionType)((Flags >> 1) & 3))
-                {
-                    case CompressionType.None: Decompressor = new NoCompression(); break;
-                    case CompressionType.ZLib: Decompressor = new ZLib(); break;
-                    case CompressionType.LZX: Decompressor = new LZX(); break;
-                    default: throw new Exception("Unknown compression!");
-                }
+                if ((Flags & 0x08) > 0)
+                    Decompressor = new ZLib();
+                else
+                    Decompressor = new NoCompression();
 
                 Buffer = Decompressor.Decompress(Buffer, DecompressedLength);
 
@@ -150,23 +140,16 @@ namespace BLPT.Brutal
                 {
                     Header.Seek(FilesTableOffset + Index * 0x10, SeekOrigin.Begin);
 
-                    //Lengths
                     uint DecompressedLength = Reader.ReadUInt24();
-                    uint LengthDifference = (uint)(Reader.ReadUInt16() << 1) | ((DecompressedLength & 1) << 17); //Probably for "obfuscation"
-                    uint CompressedLength = Reader.ReadUInt24();
-
-                    LengthDifference |= CompressedLength >> 23;
-                    DecompressedLength = (DecompressedLength >> 1) + LengthDifference;
-                    CompressedLength = (CompressedLength & 0x7fffff) >> 1;
-
-                    //Offsets
-                    uint DataOffset = Reader.ReadUInt24() << 5;
-                    byte DataFormat = Reader.ReadByte();
-                    DataOffset |= (uint)(DataFormat & 0xf8) >> 3;
-                    DataFormat &= 7;
-
                     uint NameOffset = (Reader.ReadUInt24() >> 3) + StringsTableOffset;
+                    uint DataFormat = Reader.ReadUInt16();
+                    uint DataOffset = Reader.ReadUInt24() << 5;
+                    byte Something = Reader.ReadByte();
+                    uint CompressedLength = Reader.ReadUInt24() >> 4;
                     byte Flags = Reader.ReadByte();
+
+                    if (CompressedLength > DecompressedLength)
+                        throw new Exception("Something wrong!");
 
                     Header.Seek(NameOffset, SeekOrigin.Begin);
                     string FileName = StringUtilities.ReadASCIIString(Header);
@@ -193,13 +176,10 @@ namespace BLPT.Brutal
                             }
 
                             ICompression Compressor;
-                            switch ((CompressionType)((Flags >> 1) & 3))
-                            {
-                                case CompressionType.None: Compressor = new NoCompression(); break;
-                                case CompressionType.ZLib: Compressor = new ZLib(); break;
-                                case CompressionType.LZX: Compressor = new LZX(); break;
-                                default: throw new Exception("Unknown compression!");
-                            }
+                            if ((Flags & 0x08) > 0)
+                                Compressor = new ZLib();
+                            else
+                                Compressor = new NoCompression();
 
                             byte[] Decompressed = File.ReadAllBytes(CurrentFile);
                             byte[] Compressed = Compressor.Compress(Decompressed);
@@ -208,11 +188,12 @@ namespace BLPT.Brutal
                             NewData.Write(Compressed, 0, Compressed.Length);
 
                             Header.Seek(FilesTableOffset + Index * 0x10, SeekOrigin.Begin);
-                            Writer.Write24((uint)(((Decompressed.Length - LengthDifference) << 1) | (LengthDifference >> 17)));
-                            Header.Seek(2, SeekOrigin.Current);
-                            Writer.Write24((uint)((Compressed.Length << 1) & 0x7fffff) | ((LengthDifference & 1) << 23));
+                            Writer.Write24((uint)Decompressed.Length);
+                            Header.Seek(5, SeekOrigin.Current);
                             Writer.Write24((uint)(Offset >> 5));
-                            Writer.Write(DataFormat);
+                            Header.Seek(1, SeekOrigin.Current);
+                            Writer.Write24((uint)(Compressed.Length << 4));
+
                             Offset += Compressed.Length;
 
                             Found = true;
