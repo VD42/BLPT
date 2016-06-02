@@ -56,11 +56,15 @@ namespace BLPT.Brutal
                 Header.Seek(FilesTableOffset + Index * 0x10, SeekOrigin.Begin);
 
                 uint DecompressedLength = Reader.ReadUInt24();
-                uint NameOffset = (Reader.ReadUInt24() >> 3) + StringsTableOffset;
+                uint NameOffset = Reader.ReadUInt24();
+                uint Something3 = NameOffset & 0x07;
+                NameOffset = (NameOffset >> 3) + StringsTableOffset;
                 uint DataFormat = Reader.ReadUInt16();
                 uint DataOffset = Reader.ReadUInt24() << 5;
                 byte Something = Reader.ReadByte();
-                uint CompressedLength = Reader.ReadUInt24() >> 4;
+                uint CompressedLength = Reader.ReadUInt24();
+                uint Something2 = CompressedLength & 0x0F;
+                CompressedLength = CompressedLength >> 4;
                 byte Flags = Reader.ReadByte();
 
                 if (CompressedLength > DecompressedLength)
@@ -141,11 +145,15 @@ namespace BLPT.Brutal
                     Header.Seek(FilesTableOffset + Index * 0x10, SeekOrigin.Begin);
 
                     uint DecompressedLength = Reader.ReadUInt24();
-                    uint NameOffset = (Reader.ReadUInt24() >> 3) + StringsTableOffset;
+                    uint NameOffset = Reader.ReadUInt24();
+                    uint Something3 = NameOffset & 0x07;
+                    NameOffset = (NameOffset >> 3) + StringsTableOffset;
                     uint DataFormat = Reader.ReadUInt16();
                     uint DataOffset = Reader.ReadUInt24() << 5;
                     byte Something = Reader.ReadByte();
-                    uint CompressedLength = Reader.ReadUInt24() >> 4;
+                    uint CompressedLength = Reader.ReadUInt24();
+                    uint Something2 = CompressedLength & 0x0F;
+                    CompressedLength = CompressedLength >> 4;
                     byte Flags = Reader.ReadByte();
 
                     if (CompressedLength > DecompressedLength)
@@ -184,6 +192,15 @@ namespace BLPT.Brutal
                             byte[] Decompressed = File.ReadAllBytes(CurrentFile);
                             byte[] Compressed = Compressor.Compress(Decompressed);
 
+                            if ((Flags & 0x08) == 0 && (uint)Decompressed.Length == DecompressedLength)
+                            {
+                                if ((uint)Compressed.Length != CompressedLength)
+                                    throw new Exception("Bad length!");
+                            }
+
+                            if ((uint)Compressed.Length > (uint)Decompressed.Length)
+                                throw new Exception("Something wrong!");
+
                             NewData.Seek(Offset, SeekOrigin.Begin);
                             NewData.Write(Compressed, 0, Compressed.Length);
 
@@ -192,7 +209,7 @@ namespace BLPT.Brutal
                             Header.Seek(5, SeekOrigin.Current);
                             Writer.Write24((uint)(Offset >> 5));
                             Header.Seek(1, SeekOrigin.Current);
-                            Writer.Write24((uint)(Compressed.Length << 4));
+                            Writer.Write24((((uint)Compressed.Length << 4) | Something2));
 
                             Offset += Compressed.Length;
 
